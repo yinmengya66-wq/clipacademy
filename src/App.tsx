@@ -342,6 +342,7 @@ function App() {
                         <img
                           src={course.thumbnailURL}
                           alt={course.title}
+                          referrerPolicy="no-referrer"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           loading="lazy"
                           onError={(e) => {
@@ -422,6 +423,7 @@ function App() {
                     <img
                       src={selectedCourse.thumbnailURL}
                       alt={selectedCourse.title}
+                      referrerPolicy="no-referrer"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </div>
