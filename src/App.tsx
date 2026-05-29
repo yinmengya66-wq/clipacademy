@@ -10,9 +10,10 @@ import {
   PROFICIENCY_LEVELS,
 } from '@shared/types'
 import { useCourses, useFavorites, useFilters, useProficiency } from './hooks/useCourses'
-import { openExternalLink, getSuggestions } from './services/api'
+import { openExternalLink, getSuggestions, isURL, fetchCourseFromURL, addUserCourse, removeUserCourse } from './services/api'
 
 type View = 'all' | 'favorites' | { category: Category } | { proficiency: number }
+type FetchStatus = 'idle' | 'fetching' | 'success' | 'error' | 'duplicate'
 
 const PROF_VALUES = [30, 50, 70, 100] as const
 const SORT_OPTIONS = [
@@ -52,7 +53,7 @@ function getPlatformSearchUrl(platform: Platform, keyword: string): string {
 }
 
 function App() {
-  const { courses, total, loading, search } = useCourses()
+  const { courses, total, loading, search, userCourses, refreshUserCourses } = useCourses()
   const { favoriteIds, toggle: toggleFav, isFavorite } = useFavorites()
   const { proficiency, setLevel, getLevel } = useProficiency()
   const filters = useFilters()
@@ -64,6 +65,8 @@ function App() {
   const [suggestionLoading, setSuggestionLoading] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const [fetchStatus, setFetchStatus] = useState<FetchStatus>('idle')
+  const [fetchMsg, setFetchMsg] = useState('')
 
   useEffect(() => {
     search({
@@ -88,8 +91,50 @@ function App() {
 
   const learnedCount = useMemo(() => Object.keys(proficiency).length, [proficiency])
 
+  const handleURLFetch = async (url: string) => {
+    const existing = userCourses.some((c) => c.url === url)
+    if (existing) {
+      setFetchStatus('duplicate')
+      setFetchMsg('该链接已添加过')
+      setTimeout(() => setFetchStatus('idle'), 2500)
+      return
+    }
+
+    setFetchStatus('fetching')
+    setFetchMsg('正在获取课程信息...')
+
+    const course = await fetchCourseFromURL(url)
+    if (course) {
+      addUserCourse(course)
+      refreshUserCourses()
+      // 重新搜索以合并用户课程
+      search({
+        keyword: filters.keyword || undefined,
+        platforms: filters.platforms.length ? filters.platforms : undefined,
+        categories: filters.categories.length ? filters.categories : undefined,
+        difficulties: filters.difficulties.length ? filters.difficulties : undefined,
+        sort: sortBy,
+      })
+      setFetchStatus('success')
+      setFetchMsg(`已添加：${course.title.slice(0, 30)}...`)
+      filters.setKeyword('')
+      setTimeout(() => setFetchStatus('idle'), 3000)
+    } else {
+      setFetchStatus('error')
+      setFetchMsg('获取失败，请检查链接是否正确（目前仅支持B站视频链接）')
+      setTimeout(() => setFetchStatus('idle'), 4000)
+    }
+  }
+
   const handleSearchChange = (value: string) => {
     filters.setKeyword(value)
+
+    // 检测粘贴的链接
+    if (isURL(value)) {
+      handleURLFetch(value.trim())
+      return
+    }
+
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
     if (value.length >= 2) {
@@ -204,7 +249,7 @@ function App() {
               ref={searchInputRef}
               className="search-input"
               type="text"
-              placeholder={loading ? '搜索中...' : '搜索课程、作者、标签...'}
+              placeholder={loading ? '搜索中...' : '搜索课程、作者、标签，或粘贴B站链接...'}
               value={filters.keyword}
               onChange={(e) => handleSearchChange(e.target.value)}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
@@ -231,6 +276,14 @@ function App() {
             >
               清除筛选
             </button>
+          )}
+          {fetchStatus !== 'idle' && (
+            <span style={{
+              fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap',
+              color: fetchStatus === 'success' ? '#059669' : fetchStatus === 'error' || fetchStatus === 'duplicate' ? '#dc2626' : '#6c5ce7',
+            }}>
+              {fetchStatus === 'fetching' && '⏳'} {fetchMsg}
+            </span>
           )}
         </div>
 
@@ -360,7 +413,16 @@ function App() {
                     </div>
                     <div className="card-body">
                       <div className="card-header">
-                        <div className="card-title">{course.title}</div>
+                        <div className="card-title">
+                          {course.title}
+                          {course.id.startsWith('user-') && (
+                            <span style={{
+                              display: 'inline-block', marginLeft: 6, padding: '1px 6px', borderRadius: 4,
+                              background: '#ede9fe', color: '#6c5ce7', fontSize: 10, fontWeight: 600,
+                              verticalAlign: 'middle',
+                            }}>我的</span>
+                          )}
+                        </div>
                         <button
                           className="card-fav"
                           onClick={(e) => { e.stopPropagation(); toggleFav(course.id) }}
@@ -483,6 +545,33 @@ function App() {
                     </button>
                   ))}
                 </div>
+
+                {selectedCourse.id.startsWith('user-') && (
+                  <>
+                    <div className="detail-section-title">操作</div>
+                    <button
+                      className="filter-chip"
+                      style={{
+                        borderColor: '#dc2626', color: '#dc2626', alignSelf: 'flex-start',
+                        padding: '8px 18px', fontSize: 13,
+                      }}
+                      onClick={() => {
+                        removeUserCourse(selectedCourse.id)
+                        refreshUserCourses()
+                        setSelectedCourse(null)
+                        search({
+                          keyword: filters.keyword || undefined,
+                          platforms: filters.platforms.length ? filters.platforms : undefined,
+                          categories: filters.categories.length ? filters.categories : undefined,
+                          difficulties: filters.difficulties.length ? filters.difficulties : undefined,
+                          sort: sortBy,
+                        })
+                      }}
+                    >
+                      删除此课程
+                    </button>
+                  </>
+                )}
 
                 {/* Watch link */}
                 {currentBvId ? (

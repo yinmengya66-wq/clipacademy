@@ -2,6 +2,155 @@ import type { Course, CourseSearchParams, Category } from '@shared/types'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
+// ===== URL 检测 & 外部课程抓取 =====
+
+const BV_RE = /BV[0-9A-Za-z]{10}/
+const AV_RE = /av(\d+)/i
+const B23_RE = /b23\.tv\/([A-Za-z0-9]+)/
+
+const URL_PATTERNS: { platform: string; re: RegExp }[] = [
+  { platform: 'bilibili', re: /bilibili\.com\/video\// },
+  { platform: 'bilibili', re: /b23\.tv\// },
+  { platform: 'xiaohongshu', re: /xiaohongshu\.com\// },
+  { platform: 'douyin', re: /douyin\.com\// },
+  { platform: 'youtube', re: /youtube\.com\/watch/ },
+  { platform: 'youtube', re: /youtu\.be\// },
+]
+
+export function detectURLPlatform(url: string): string | null {
+  for (const { platform, re } of URL_PATTERNS) {
+    if (re.test(url)) return platform
+  }
+  return null
+}
+
+export function isURL(text: string): boolean {
+  return /^https?:\/\//.test(text.trim())
+}
+
+export async function fetchCourseFromURL(url: string): Promise<Course | null> {
+  const platform = detectURLPlatform(url)
+  if (platform === 'bilibili') return fetchBilibiliCourse(url)
+  return null
+}
+
+async function fetchBilibiliCourse(url: string): Promise<Course | null> {
+  const bvMatch = url.match(BV_RE)
+  const avMatch = url.match(AV_RE)
+  const b23Match = url.match(B23_RE)
+
+  let apiURL = ''
+  if (bvMatch) {
+    apiURL = `https://api.bilibili.com/x/web-interface/view?bvid=${bvMatch[0]}`
+  } else if (avMatch) {
+    apiURL = `https://api.bilibili.com/x/web-interface/view?aid=${parseInt(avMatch[1])}`
+  } else if (b23Match) {
+    // b23.tv short link — need to resolve first
+    try {
+      const resp = await fetch(url, { method: 'HEAD', redirect: 'manual' })
+      const location = resp.headers.get('location') ?? ''
+      const bv = location.match(BV_RE)
+      if (bv) apiURL = `https://api.bilibili.com/x/web-interface/view?bvid=${bv[0]}`
+      const av = location.match(AV_RE)
+      if (!bv && av) apiURL = `https://api.bilibili.com/x/web-interface/view?aid=${parseInt(av[1])}`
+    } catch {
+      return null
+    }
+  }
+
+  if (!apiURL) return null
+
+  try {
+    const resp = await fetch(apiURL)
+    if (!resp.ok) return null
+    const json = await resp.json() as any
+    if (json.code !== 0 || !json.data) return null
+
+    const d = json.data
+    const id = `user-${Date.now()}`
+    const bvId = d.bvid ?? (bvMatch ? bvMatch[0] : '')
+
+    return {
+      id,
+      title: d.title ?? '',
+      author: d.owner?.name ?? '',
+      platform: 'bilibili',
+      url: url,
+      category: guessCategory(d.title ?? '', d.desc ?? '', d.tname ?? ''),
+      difficulty: 'beginner',
+      duration: d.duration ?? null,
+      description: (d.desc ?? '').slice(0, 200) || '暂无描述',
+      tags: extractTags(d.title ?? '', d.desc ?? ''),
+      thumbnailURL: (d.pic ?? '').replace(/^http:/, 'https:'),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      bvId,
+      playCount: d.stat?.view ?? 0,
+      favorites: d.stat?.favorite ?? 0,
+    }
+  } catch {
+    return null
+  }
+}
+
+function guessCategory(title: string, desc: string, tname: string): Category {
+  const text = (title + desc + tname).toLowerCase()
+  const map: [RegExp, Category][] = [
+    [/转场|过渡/, 'transitions'],
+    [/调色|滤镜|颜色|lut/, 'colorGrading'],
+    [/音效|bgm|背景音乐|音频|配乐/, 'audioDesign'],
+    [/字幕|花字|文字|标题动画/, 'subtitles'],
+    [/漫剪|动漫|amv/, 'animeEdit'],
+    [/混剪|踩点|卡点/, 'mashup'],
+    [/口播|vlog|日常/, 'talkingHead'],
+    [/带货|电商|卖货/, 'ecommerce'],
+    [/知识|科普|教程|教学/, 'knowledgeShare'],
+    [/综艺|搞笑|娱乐/, 'varietyShow'],
+    [/特效|ae|合成|抠像|关键帧/, 'effects'],
+    [/卡点|节奏|踩点/, 'beatSync'],
+  ]
+  for (const [re, cat] of map) {
+    if (re.test(text)) return cat
+  }
+  return 'basics'
+}
+
+function extractTags(title: string, desc: string): string[] {
+  const text = title + ' ' + desc
+  const tagSet = new Set<string>()
+  const patterns = [/剪映/g, /PR/g, /AE/g, /达芬奇/g, /FCPX?/g, /调色/g, /卡点/g, /转场/g, /混剪/g,
+    /字幕/g, /关键帧/g, /蒙版/g, /抠像/g, /变速/g, /曲线/g]
+  for (const p of patterns) {
+    if (p.test(text)) tagSet.add(p.source.replace(/\\/g, ''))
+  }
+  return [...tagSet].slice(0, 8)
+}
+
+// ===== 用户课程本地存储 =====
+
+const USER_COURSES_KEY = 'clipacademy-user-courses'
+
+export function getUserCourses(): Course[] {
+  try {
+    return JSON.parse(localStorage.getItem(USER_COURSES_KEY) ?? '[]')
+  } catch {
+    return []
+  }
+}
+
+export function addUserCourse(course: Course): void {
+  const courses = getUserCourses()
+  // 去重：同 URL 不重复添加
+  if (courses.some((c) => c.url === course.url)) return
+  courses.unshift(course)
+  localStorage.setItem(USER_COURSES_KEY, JSON.stringify(courses))
+}
+
+export function removeUserCourse(id: string): void {
+  const courses = getUserCourses().filter((c) => c.id !== id)
+  localStorage.setItem(USER_COURSES_KEY, JSON.stringify(courses))
+}
+
 interface PaginatedResponse {
   courses: Course[]
   total: number

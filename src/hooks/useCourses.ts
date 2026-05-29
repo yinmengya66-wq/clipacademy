@@ -1,17 +1,45 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Course, CourseSearchParams, Platform, Category, Difficulty } from '@shared/types'
-import { searchCourses, getFavoriteIds, toggleFavorite as toggleFavApi, getProficiency as getProfApi, setProficiency as setProfApi } from '../services/api'
+import { searchCourses, getFavoriteIds, toggleFavorite as toggleFavApi, getProficiency as getProfApi, setProficiency as setProfApi, getUserCourses } from '../services/api'
 
 export function useCourses() {
   const [courses, setCourses] = useState<Course[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [userCourses, setUserCourses] = useState<Course[]>([])
+
+  const refreshUserCourses = useCallback(() => {
+    setUserCourses(getUserCourses())
+  }, [])
 
   const search = useCallback(async (params: CourseSearchParams & { sort?: string }) => {
     setLoading(true)
     const result = await searchCourses(params)
-    setCourses(result.courses)
-    setTotal(result.total)
+    const userList = getUserCourses()
+    setUserCourses(userList)
+
+    // 合并用户课程：过滤后放在最前面
+    let merged = [...result.courses]
+    const userMatches = userList.filter((uc) => {
+      if (params.keyword) {
+        const kw = params.keyword.toLowerCase()
+        return (
+          uc.title.toLowerCase().includes(kw) ||
+          uc.author.toLowerCase().includes(kw) ||
+          uc.tags.some((t) => t.toLowerCase().includes(kw)) ||
+          uc.description.toLowerCase().includes(kw)
+        )
+      }
+      return true
+    })
+    // 把匹配的用户课程插入最前面
+    for (const um of userMatches) {
+      if (!merged.find((c) => c.id === um.id)) {
+        merged.unshift(um)
+      }
+    }
+    setCourses(merged)
+    setTotal(result.total + userMatches.filter((um) => !result.courses.find((c) => c.id === um.id)).length)
     setLoading(false)
   }, [])
 
@@ -19,7 +47,7 @@ export function useCourses() {
     search({})
   }, [search])
 
-  return { courses, total, loading, search }
+  return { courses, total, loading, search, userCourses, refreshUserCourses }
 }
 
 export function useFavorites() {
