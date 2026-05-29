@@ -570,32 +570,32 @@ function App() {
                   ))}
                 </div>
 
-                {selectedCourse.id.startsWith('user-') && (
-                  <>
-                    <div className="detail-section-title">操作</div>
-                    <button
-                      className="filter-chip"
-                      style={{
-                        borderColor: '#dc2626', color: '#dc2626', alignSelf: 'flex-start',
-                        padding: '8px 18px', fontSize: 13,
-                      }}
-                      onClick={() => {
-                        removeUserCourse(selectedCourse.id)
-                        refreshUserCourses()
-                        setSelectedCourse(null)
-                        search({
-                          keyword: filters.keyword || undefined,
-                          platforms: filters.platforms.length ? filters.platforms : undefined,
-                          categories: filters.categories.length ? filters.categories : undefined,
-                          difficulties: filters.difficulties.length ? filters.difficulties : undefined,
-                          sort: sortBy,
-                        })
-                      }}
-                    >
-                      删除此课程
-                    </button>
-                  </>
-                )}
+                <div className="detail-section-title">操作</div>
+                <button
+                  className="filter-chip"
+                  style={{
+                    borderColor: '#dc2626', color: '#dc2626', alignSelf: 'flex-start',
+                    padding: '8px 18px', fontSize: 13,
+                  }}
+                  onClick={() => {
+                    if (selectedCourse.id.startsWith('user-')) {
+                      removeUserCourse(selectedCourse.id)
+                      refreshUserCourses()
+                    } else {
+                      hideCourse(selectedCourse.id)
+                    }
+                    setSelectedCourse(null)
+                    search({
+                      keyword: filters.keyword || undefined,
+                      platforms: filters.platforms.length ? filters.platforms : undefined,
+                      categories: filters.categories.length ? filters.categories : undefined,
+                      difficulties: filters.difficulties.length ? filters.difficulties : undefined,
+                      sort: sortBy,
+                    })
+                  }}
+                >
+                  {selectedCourse.id.startsWith('user-') ? '删除此课程' : '隐藏此课程'}
+                </button>
 
                 {/* Watch link */}
                 {currentBvId ? (
