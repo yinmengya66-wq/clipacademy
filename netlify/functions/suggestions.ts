@@ -1,5 +1,5 @@
 import type { Handler, HandlerEvent } from '@netlify/functions'
-import { getSuggestions } from './_lib'
+import { getSuggestions } from '../lib/data'
 
 export const handler: Handler = async (event: HandlerEvent) => {
   try {

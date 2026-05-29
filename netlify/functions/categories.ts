@@ -1,5 +1,5 @@
 import type { Handler } from '@netlify/functions'
-import { getCategoryStats } from './_lib'
+import { getCategoryStats } from '../lib/data'
 
 export const handler: Handler = async () => {
   try {

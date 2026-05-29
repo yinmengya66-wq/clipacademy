@@ -1,5 +1,4 @@
-import fs from 'fs'
-import path from 'path'
+import courses from './seed.json'
 
 interface Course {
   id: string
@@ -43,18 +42,10 @@ function extractBvId(url: string): string {
   return m ? m[0] : ''
 }
 
-let _courses: Course[] | null = null
-
-function loadCourses(): Course[] {
-  if (_courses) return _courses
-  const filePath = path.join(process.cwd(), 'server/src/data/seed.json')
-  const raw = fs.readFileSync(filePath, 'utf-8')
-  _courses = JSON.parse(raw) as Course[]
-  for (const c of _courses) {
-    if (!c.bvId) c.bvId = extractBvId(c.url)
-  }
-  return _courses
-}
+const allCourses = (courses as any[]).map((c: any) => ({
+  ...c,
+  bvId: c.bvId || extractBvId(c.url),
+})) as Course[]
 
 export function searchCourses(opts: {
   keyword?: string
@@ -65,7 +56,7 @@ export function searchCourses(opts: {
   page?: number
   pageSize?: number
 }) {
-  let list = [...loadCourses()]
+  let list = [...allCourses]
   const kw = opts.keyword?.toLowerCase()
 
   if (kw) {
@@ -101,13 +92,17 @@ export function searchCourses(opts: {
       list.sort((a, b) => (b.favorites ?? 0) - (a.favorites ?? 0))
       break
     case 'newest':
-      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      list.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
       break
     case 'duration':
       list.sort((a, b) => b.duration - a.duration)
       break
     default:
-      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      list.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
   }
 
   const total = list.length
@@ -121,13 +116,12 @@ export function searchCourses(opts: {
 
 export function getCourseByBvId(bvId: string): Course | null {
   if (!bvId) return null
-  return loadCourses().find((c) => c.bvId === bvId) ?? null
+  return allCourses.find((c) => c.bvId === bvId) ?? null
 }
 
 export function getCategoryStats() {
-  const courses = loadCourses()
   const map: Record<string, number> = {}
-  for (const c of courses) {
+  for (const c of allCourses) {
     map[c.category] = (map[c.category] ?? 0) + 1
   }
   return Object.entries(map).map(([category, count]) => ({
@@ -141,7 +135,7 @@ export function getSuggestions(q: string, limit = 8): string[] {
   const kw = q.toLowerCase()
   const seen = new Set<string>()
   const result: string[] = []
-  for (const c of loadCourses()) {
+  for (const c of allCourses) {
     if (c.title.toLowerCase().includes(kw) && !seen.has(c.title)) {
       seen.add(c.title)
       result.push(c.title)

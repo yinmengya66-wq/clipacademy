@@ -1,5 +1,5 @@
 import type { Handler, HandlerEvent } from '@netlify/functions'
-import { getCourseByBvId } from './_lib'
+import { getCourseByBvId } from '../lib/data'
 
 export const handler: Handler = async (event: HandlerEvent) => {
   try {

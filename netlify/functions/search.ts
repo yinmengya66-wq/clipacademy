@@ -1,9 +1,9 @@
 import type { Handler, HandlerEvent } from '@netlify/functions'
-import { searchCourses } from './_lib'
+import { searchCourses } from '../lib/data'
 
 export const handler: Handler = async (event: HandlerEvent) => {
   try {
-    const { queryStringParameters: q } = event
+    const q = event.queryStringParameters
     const result = searchCourses({
       keyword: q?.keyword,
       platforms: q?.platforms,
