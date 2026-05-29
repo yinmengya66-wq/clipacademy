@@ -30,3 +30,30 @@ Pods/
 
 # Carthage
 Carthage/Build/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+release/
+out/
+
+# Test coverage
+coverage/
+*.lcov
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
