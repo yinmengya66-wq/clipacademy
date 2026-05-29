@@ -24,6 +24,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/fetch-course"
+  to = "/.netlify/functions/fetch-course"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

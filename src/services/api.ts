@@ -35,58 +35,33 @@ export async function fetchCourseFromURL(url: string): Promise<Course | null> {
 }
 
 async function fetchBilibiliCourse(url: string): Promise<Course | null> {
-  const bvMatch = url.match(BV_RE)
-  const avMatch = url.match(AV_RE)
-  const b23Match = url.match(B23_RE)
-
-  let apiURL = ''
-  if (bvMatch) {
-    apiURL = `https://api.bilibili.com/x/web-interface/view?bvid=${bvMatch[0]}`
-  } else if (avMatch) {
-    apiURL = `https://api.bilibili.com/x/web-interface/view?aid=${parseInt(avMatch[1])}`
-  } else if (b23Match) {
-    // b23.tv short link — need to resolve first
-    try {
-      const resp = await fetch(url, { method: 'HEAD', redirect: 'manual' })
-      const location = resp.headers.get('location') ?? ''
-      const bv = location.match(BV_RE)
-      if (bv) apiURL = `https://api.bilibili.com/x/web-interface/view?bvid=${bv[0]}`
-      const av = location.match(AV_RE)
-      if (!bv && av) apiURL = `https://api.bilibili.com/x/web-interface/view?aid=${parseInt(av[1])}`
-    } catch {
-      return null
-    }
-  }
-
-  if (!apiURL) return null
-
   try {
-    const resp = await fetch(apiURL)
+    const resp = await fetch(`${API_BASE}/fetch-course?url=${encodeURIComponent(url)}`)
     if (!resp.ok) return null
     const json = await resp.json() as any
-    if (json.code !== 0 || !json.data) return null
+    if (json.error) return null
 
-    const d = json.data
     const id = `user-${Date.now()}`
-    const bvId = d.bvid ?? (bvMatch ? bvMatch[0] : '')
+    const bvMatch = url.match(BV_RE)
+    const bvId = json.bvId ?? (bvMatch ? bvMatch[0] : '')
 
     return {
       id,
-      title: d.title ?? '',
-      author: d.owner?.name ?? '',
+      title: json.title ?? '',
+      author: json.author ?? '',
       platform: 'bilibili',
-      url: url,
-      category: guessCategory(d.title ?? '', d.desc ?? '', d.tname ?? ''),
+      url: json.url ?? url,
+      category: guessCategory(json.title ?? '', json.description ?? '', ''),
       difficulty: 'beginner',
-      duration: d.duration ?? null,
-      description: (d.desc ?? '').slice(0, 200) || '暂无描述',
-      tags: extractTags(d.title ?? '', d.desc ?? ''),
-      thumbnailURL: (d.pic ?? '').replace(/^http:/, 'https:'),
+      duration: json.duration ?? null,
+      description: json.description ?? '暂无描述',
+      tags: extractTags(json.title ?? '', json.description ?? ''),
+      thumbnailURL: json.thumbnailURL ?? '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       bvId,
-      playCount: d.stat?.view ?? 0,
-      favorites: d.stat?.favorite ?? 0,
+      playCount: json.playCount ?? 0,
+      favorites: json.favorites ?? 0,
     }
   } catch {
     return null
