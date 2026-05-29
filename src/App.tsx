@@ -416,6 +416,16 @@ function App() {
                 <button className="detail-close" onClick={() => setSelectedCourse(null)}>✕</button>
               </div>
               <div className="detail-body">
+                {/* Cover Image */}
+                {selectedCourse.thumbnailURL && (
+                  <div className="detail-cover">
+                    <img
+                      src={selectedCourse.thumbnailURL}
+                      alt={selectedCourse.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
                 {/* Player */}
                 {currentBvId ? (
                   <div className="detail-player-wrapper">
