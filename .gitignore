@@ -10,23 +10,42 @@
 Icon
 .disk
 
-# Xcode
-*.xcuserdata
-*.xccheckout
-*.moved-aside
-DerivedData/
-build/
-*.hmap
-*.ipa
-*.xcuserstate
+# Dependencies
+node_modules/
+.pnpm-store/
 
-# Swift Package Manager
-.build/
-Packages/
-Package.resolved
+# Build output
+dist/
+out/
+release/
 
-# CocoaPods
-Pods/
+# Vite
+.vite/
 
-# Carthage
-Carthage/Build/
+# Electron
+*.dmg
+*.zip
+*.AppImage
+
+# TypeScript
+*.tsbuildinfo
+*.tsbuildinfo.*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+*.log
