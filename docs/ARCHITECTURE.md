@@ -6,7 +6,7 @@
 
 ## 概述
 
-ClipAcademy 是一个基于 **Electron + React + TypeScript** 的桌面应用，采用 **多进程架构**（主进程 / 渲染进程 / 预加载脚本）。
+剪映学堂是一个基于 **Electron + React + TypeScript** 的桌面应用，采用 **多进程架构**（主进程 / 渲染进程 / 预加载脚本），聚合多平台优质剪辑课程资源。
 
 ## 架构图
 
@@ -15,13 +15,13 @@ ClipAcademy 是一个基于 **Electron + React + TypeScript** 的桌面应用，
 │               Renderer Process                │
 │  ┌────────────────────────────────────────┐  │
 │  │             React App                   │  │
-│  │  (Sidebar / Search / Browse / Detail)   │  │
+│  │  (Sidebar / Search / Filters / Grid / Detail) │
 │  ├────────────────────────────────────────┤  │
 │  │          Custom Hooks                   │  │
-│  │  (状态管理 / 业务逻辑 / 数据转换)        │  │
+│  │  (useCourses / useFavorites / useFilters / useProficiency) │
 │  ├────────────────────────────────────────┤  │
-│  │           Services                      │  │
-│  │  (SearchEngine / DataLoader / Favorites)│  │
+│  │           Services (api.ts)             │  │
+│  │  (searchCourses / getFavorites / getProficiency) │
 │  └──────────────┬─────────────────────────┘  │
 │                 │ IPC (contextBridge)         │
 ├─────────────────┼────────────────────────────┤
@@ -53,44 +53,54 @@ ClipAcademy 是一个基于 **Electron + React + TypeScript** 的桌面应用，
 2. **UI 架构**：React 函数组件 + Hooks，按功能模块组织组件树
 3. **状态管理**：初期使用 React Context + useReducer，复杂度提升后考虑 Zustand
 4. **数据持久化**：主进程管理 JSON 文件读写，通过 IPC 暴露给渲染进程；课程数据以 JSON 格式存储在 `src/resources/` 中
-5. **搜索实现**：渲染进程本地全文搜索，使用 Fuse.js 或自定义搜索
-6. **样式方案**：CSS Modules 或 Tailwind CSS（待 UI 设计时确定）
+5. **搜索实现**：渲染进程本地过滤搜索，关键字匹配标题/描述/作者/标签
+6. **样式方案**：CSS 变量 + 全局样式表，按 BEM 风格组织组件类名
+7. **开发模式**：Electron 不可用时自动回退到 localStorage，支持纯浏览器开发调试
 7. **测试策略**：Vitest 单元测试 + Testing Library 组件测试
 
 ## 组件树
 
 ```
-App (Renderer)
-├── App.tsx
-│   ├── Sidebar
-│   │   ├── SearchField          # 搜索输入框
-│   │   ├── CategoryList          # 分类列表
-│   │   └── PlatformFilter        # 平台筛选
-│   ├── MainContent
-│   │   ├── CourseListView
-│   │   │   ├── CourseCard        # 课程卡片
-│   │   │   └── EmptyState        # 空状态提示
-│   │   └── CourseDetailView
-│   │       ├── CourseInfoSection # 课程信息
-│   │       ├── PlatformBadge     # 平台标签
-│   │       └── OpenLinkButton    # 跳转按钮
-│   └── FavoritesPanel            # 收藏面板
+App (Renderer / App.tsx)
+├── Sidebar (侧边栏)
+│   ├── Logo + 导航 (全部课程 / 我的收藏)
+│   ├── 学习进度筛选 (按掌握程度: 0%/30%/50%/70%/100%)
+│   └── 分类浏览 (14 个技能分类)
+├── MainContent
+│   ├── Toolbar (搜索框 + 清除筛选)
+│   ├── FilterRows (平台 / 分类 / 难度 筛选按钮)
+│   ├── ResultCount + CourseGrid
+│   │   ├── CourseCard (标题 / 作者 / 平台标签 / 描述 / 难度 / 时长 / 掌握程度)
+│   │   └── EmptyState
+│   └── DetailPanel (侧滑面板)
+│       ├── 课程详情 (标题 / 元信息 / 描述 / 标签)
+│       ├── 掌握程度选择器 (5 级)
+│       └── 平台跳转链接
 ```
 
 ## 数据流
 
 ```
-用户操作 → React 组件 → Hooks/Custom Hooks → Service 层
-                                                    │
-                                        ┌───────────┴───────────┐
-                                        │   window.electronAPI  │ (preload 暴露)
-                                        └───────────┬───────────┘
-                                                    │ IPC
-                                        ┌───────────┴───────────┐
-                                        │     主进程服务          │
-                                        │  (文件读写 / 系统调用)  │
-                                        └───────────────────────┘
+用户操作 → React 组件 → Custom Hooks → Service 层 (api.ts)
+                                              │
+                                  ┌───────────┴───────────┐
+                                  │   window.electronAPI  │ (preload 暴露)
+                                  │   OR localStorage     │ (浏览器开发回退)
+                                  └───────────┬───────────┘
+                                              │ IPC
+                                  ┌───────────┴───────────┐
+                                  │     主进程服务          │
+                                  │  (内存存储 / 系统调用)   │
+                                  └───────────────────────┘
 ```
+
+### 数据存储策略
+
+| 数据类型 | 主进程存储 | 浏览器回退 |
+|---------|-----------|-----------|
+| 课程数据 | TypeScript 种子文件 (64门) | 同主进程，在 api.ts 中直接 import |
+| 收藏列表 | `Set<string>` (内存) | `localStorage['clipacademy-favorites']` |
+| 掌握程度 | `Map<string, number>` (内存) | `localStorage['clipacademy-proficiency']` |
 
 ## 安全模型
 

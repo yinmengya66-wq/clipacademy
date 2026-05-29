@@ -1,18 +1,17 @@
 {
-  "name": "clip-academy",
-  "version": "0.1.0",
-  "description": "剪辑课程查询 · ClipAcademy — macOS 桌面应用，聚合多平台优质剪辑课程资源",
-  "main": "./dist/main/index.js",
+  "name": "clipacademy",
+  "version": "0.2.0",
+  "description": "剪映学堂 — 聚合多平台优质剪辑课程资源",
   "author": "ClipAcademy Team",
   "license": "MIT",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "preview": "electron-vite preview",
-    "start": "electron .",
-    "package": "electron-builder --mac",
-    "package:dir": "electron-builder --mac --dir",
+    "dev": "concurrently -n server,client -c blue,green \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "vite",
+    "dev:server": "cd server && npm run dev",
+    "build": "vite build",
+    "preview": "vite preview",
     "lint": "eslint src/ --ext .ts,.tsx",
     "lint:fix": "eslint src/ --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
@@ -21,8 +20,10 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "framer-motion": "^11.0.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
@@ -33,9 +34,7 @@
     "@typescript-eslint/parser": "^8.15.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^2.1.6",
-    "electron": "^33.2.0",
-    "electron-builder": "^25.1.8",
-    "electron-vite": "^3.1.0",
+    "concurrently": "^9.0.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",
@@ -43,24 +42,5 @@
     "typescript": "^5.6.3",
     "vite": "^6.0.1",
     "vitest": "^2.1.6"
-  },
-  "build": {
-    "appId": "com.clipacademy.app",
-    "productName": "ClipAcademy",
-    "directories": {
-      "output": "release"
-    },
-    "mac": {
-      "category": "public.app-category.education",
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "minimumSystemVersion": "13.0"
-    },
-    "files": [
-      "dist/**/*",
-      "resources/**/*"
-    ]
   }
 }

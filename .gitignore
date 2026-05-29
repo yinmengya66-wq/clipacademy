@@ -12,12 +12,19 @@ Icon
 
 # Dependencies
 node_modules/
+**/node_modules/
 .pnpm-store/
 
 # Build output
 dist/
 out/
 release/
+build/
+
+# SQLite database
+*.db
+*.db-shm
+*.db-wal
 
 # Vite
 .vite/
@@ -48,6 +55,9 @@ coverage/
 
 # OS
 Thumbs.db
+
+# Tooling
+.wanman/
 
 # Logs
 npm-debug.log*

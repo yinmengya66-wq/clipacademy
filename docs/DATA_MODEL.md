@@ -46,23 +46,35 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 ```typescript
 type Category =
   | 'basics'
-  | 'colorGrading'
   | 'transitions'
+  | 'colorGrading'
   | 'audioDesign'
   | 'subtitles'
-  | 'editingMind'
+  | 'animeEdit'
+  | 'mashup'
+  | 'talkingHead'
+  | 'ecommerce'
+  | 'knowledgeShare'
+  | 'varietyShow'
   | 'effects'
-  | 'storytelling'
+  | 'vlog'
+  | 'beatSync'
 
 const CATEGORY_LABELS: Record<Category, string> = {
   basics: '基础操作',
-  colorGrading: '调色',
   transitions: '转场特效',
-  audioDesign: '音效设计',
-  subtitles: '字幕标题',
-  editingMind: '剪辑思维',
+  colorGrading: '调色滤镜',
+  audioDesign: '音效BGM',
+  subtitles: '字幕动画',
+  animeEdit: '漫剪',
+  mashup: '混剪',
+  talkingHead: '口播',
+  ecommerce: '电商带货',
+  knowledgeShare: '知识分享',
+  varietyShow: '综艺类',
   effects: '视觉特效',
-  storytelling: '叙事技巧',
+  vlog: 'Vlog日常',
+  beatSync: '卡点节奏',
 }
 ```
 
@@ -78,28 +90,42 @@ const DIFFICULTY_LABELS: Record<Difficulty, string> = {
 }
 ```
 
+### 掌握程度（Proficiency）
+
+```typescript
+const PROFICIENCY_LEVELS = [
+  { value: 0, label: '未学习' },
+  { value: 30, label: '了解 (30%)' },
+  { value: 50, label: '练习中 (50%)' },
+  { value: 70, label: '熟练 (70%)' },
+  { value: 100, label: '精通 (100%)' },
+] as const
+```
+
+每个课程与用户的掌握程度关联存储在 `Record<string, number>`（courseId → level）。
+
 ## 数据存储结构
 
-课程数据以 JSON 文件存储，由主进程管理读写：
+课程数据以 TypeScript 种子文件存储，收藏和掌握程度由主进程在内存中管理：
 
 ```
-src/resources/
-└── courses.json        # 课程索引主文件
-    [
+src/shared/data/
+└── courses.ts          # 种子数据 (64 门课程)
+    export const SEED_COURSES: Course[] = [
       {
-        "id": "uuid-string",
-        "title": "示例课程标题",
-        "author": "作者名",
-        "platform": "bilibili",
-        "url": "https://...",
-        "category": "colorGrading",
-        "difficulty": "beginner",
-        "duration": 600,
-        "description": "课程简介...",
-        "tags": ["调色", "LUT", "达芬奇"],
-        "thumbnailURL": null,
-        "createdAt": "2025-01-01T00:00:00Z",
-        "updatedAt": "2025-01-01T00:00:00Z"
+        id: "uuid-string",
+        title: "示例课程标题",
+        author: "作者名",
+        platform: "bilibili",
+        url: "https://www.bilibili.com/video/BV1xxx/",
+        category: "colorGrading",
+        difficulty: "beginner",
+        duration: 600,
+        description: "课程简介...",
+        tags: ["调色", "LUT", "达芬奇"],
+        thumbnailURL: null,
+        createdAt: "2026-05-01T00:00:00Z",
+        updatedAt: "2026-05-01T00:00:00Z"
       }
     ]
 ```
@@ -113,13 +139,19 @@ export type Platform = 'xiaohongshu' | 'bilibili' | 'douyin' | 'youtube'
 
 export type Category =
   | 'basics'
-  | 'colorGrading'
   | 'transitions'
+  | 'colorGrading'
   | 'audioDesign'
   | 'subtitles'
-  | 'editingMind'
+  | 'animeEdit'
+  | 'mashup'
+  | 'talkingHead'
+  | 'ecommerce'
+  | 'knowledgeShare'
+  | 'varietyShow'
   | 'effects'
-  | 'storytelling'
+  | 'vlog'
+  | 'beatSync'
 
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
 
@@ -151,6 +183,14 @@ export interface CourseSearchResult {
   total: number
   keyword: string
 }
+
+export const PROFICIENCY_LEVELS = [
+  { value: 0, label: '未学习' },
+  { value: 30, label: '了解 (30%)' },
+  { value: 50, label: '练习中 (50%)' },
+  { value: 70, label: '熟练 (70%)' },
+  { value: 100, label: '精通 (100%)' },
+] as const
 ```
 
 ## IPC 数据接口
@@ -165,11 +205,14 @@ interface ElectronAPI {
   getAllCategories: () => Promise<Category[]>
   getFavoriteIds: () => Promise<string[]>
   toggleFavorite: (courseId: string) => Promise<boolean>
+  getProficiency: () => Promise<Record<string, number>>
+  setProficiency: (courseId: string, level: number) => Promise<void>
   openExternalLink: (url: string) => Promise<void>
 }
 
 // 渲染进程中调用
 // window.electronAPI.searchCourses({ keyword: '调色' })
+// window.electronAPI.setProficiency('course-uuid', 70)
 ```
 
 ---

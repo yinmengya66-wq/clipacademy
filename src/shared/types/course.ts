@@ -20,23 +20,35 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
 
 export type Category =
   | 'basics'
-  | 'colorGrading'
   | 'transitions'
+  | 'colorGrading'
   | 'audioDesign'
   | 'subtitles'
-  | 'editingMind'
+  | 'animeEdit'
+  | 'mashup'
+  | 'talkingHead'
+  | 'ecommerce'
+  | 'knowledgeShare'
+  | 'varietyShow'
   | 'effects'
-  | 'storytelling'
+  | 'vlog'
+  | 'beatSync'
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   basics: '基础操作',
-  colorGrading: '调色',
   transitions: '转场特效',
-  audioDesign: '音效设计',
-  subtitles: '字幕标题',
-  editingMind: '剪辑思维',
+  colorGrading: '调色滤镜',
+  audioDesign: '音效BGM',
+  subtitles: '字幕动画',
+  animeEdit: '漫剪',
+  mashup: '混剪',
+  talkingHead: '口播',
+  ecommerce: '电商带货',
+  knowledgeShare: '知识分享',
+  varietyShow: '综艺类',
   effects: '视觉特效',
-  storytelling: '叙事技巧',
+  vlog: 'Vlog日常',
+  beatSync: '卡点节奏',
 }
 
 // ===== 难度 =====
@@ -65,6 +77,14 @@ export interface Course {
   thumbnailURL: string | null
   createdAt: string
   updatedAt: string
+  /** B站 BV号，用于播放器嵌入 */
+  bvId?: string
+  /** 播放量 */
+  playCount?: number
+  /** 弹幕数 */
+  danmaku?: number
+  /** 收藏数 */
+  favorites?: number
 }
 
 // ===== 搜索 =====
@@ -76,26 +96,18 @@ export interface CourseSearchParams {
   difficulties?: Difficulty[]
 }
 
-export interface CourseSearchResult {
-  courses: Course[]
-  total: number
-  keyword: string
-}
+// ===== 掌握程度 =====
 
-// ===== IPC 数据接口 (preload → renderer) =====
+export const PROFICIENCY_LEVELS = [
+  { value: 0, label: '未学习' },
+  { value: 30, label: '了解 (30%)' },
+  { value: 50, label: '练习中 (50%)' },
+  { value: 70, label: '熟练 (70%)' },
+  { value: 100, label: '精通 (100%)' },
+] as const
 
-export interface ElectronAPI {
-  searchCourses: (params: CourseSearchParams) => Promise<CourseSearchResult>
-  getCourseById: (id: string) => Promise<Course | null>
-  getAllCategories: () => Promise<Category[]>
-  getFavoriteIds: () => Promise<string[]>
-  toggleFavorite: (courseId: string) => Promise<boolean>
-  openExternalLink: (url: string) => Promise<void>
-}
+// ===== 常量数组（遍历/筛选 UI 使用） =====
 
-// 扩展 Window 类型，使渲染进程可以直接使用 window.electronAPI
-declare global {
-  interface Window {
-    electronAPI: ElectronAPI
-  }
-}
+export const ALL_PLATFORMS: Platform[] = Object.keys(PLATFORM_LABELS) as Platform[]
+export const ALL_CATEGORIES: Category[] = Object.keys(CATEGORY_LABELS) as Category[]
+export const ALL_DIFFICULTIES: Difficulty[] = Object.keys(DIFFICULTY_LABELS) as Difficulty[]

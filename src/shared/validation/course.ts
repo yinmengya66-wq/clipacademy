@@ -12,13 +12,19 @@ const PLATFORMS: readonly Platform[] = ['xiaohongshu', 'bilibili', 'douyin', 'yo
 
 const CATEGORIES: readonly Category[] = [
   'basics',
-  'colorGrading',
   'transitions',
+  'colorGrading',
   'audioDesign',
   'subtitles',
-  'editingMind',
+  'animeEdit',
+  'mashup',
+  'talkingHead',
+  'ecommerce',
+  'knowledgeShare',
+  'varietyShow',
   'effects',
-  'storytelling',
+  'vlog',
+  'beatSync',
 ]
 
 const DIFFICULTIES: readonly Difficulty[] = ['beginner', 'intermediate', 'advanced']

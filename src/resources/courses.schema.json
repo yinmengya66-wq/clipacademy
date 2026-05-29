@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://clip-academy.app/schemas/courses.schema.json",
+  "title": "ClipAcademy 课程种子数据 JSON Schema",
+  "description": "验证 src/resources/courses.json 中每一条 Course 记录的结构与字段约束，与 DATA_MODEL.md 和 src/shared/types/course.ts 保持一致。",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/course"
+  },
+  "minItems": 1,
+  "$defs": {
+    "course": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "author",
+        "platform",
+        "url",
+        "category",
+        "difficulty",
+        "description",
+        "tags",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "课程唯一标识 (UUID v4)",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "课程标题"
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1,
+          "description": "作者 / UP主名称"
+        },
+        "platform": {
+          "type": "string",
+          "enum": ["xiaohongshu", "bilibili", "douyin", "youtube"],
+          "description": "来源平台: xiaohongshu (小红书) | bilibili (B站) | douyin (抖音) | youtube (YouTube)"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri",
+          "description": "课程原始链接"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "basics",
+            "colorGrading",
+            "transitions",
+            "audioDesign",
+            "subtitles",
+            "editingMind",
+            "effects",
+            "storytelling"
+          ],
+          "description": "技能分类: basics (基础操作) | colorGrading (调色) | transitions (转场特效) | audioDesign (音效设计) | subtitles (字幕标题) | editingMind (剪辑思维) | effects (视觉特效) | storytelling (叙事技巧)"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["beginner", "intermediate", "advanced"],
+          "description": "难度等级: beginner (入门) | intermediate (进阶) | advanced (高级)"
+        },
+        "duration": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ],
+          "description": "视频时长（秒），可为 null 表示时长未知"
+        },
+        "description": {
+          "type": "string",
+          "description": "课程简介"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "description": "技能标签列表，至少包含 1 个标签"
+        },
+        "thumbnailURL": {
+          "oneOf": [
+            { "type": "string", "format": "uri" },
+            { "type": "null" }
+          ],
+          "description": "缩略图链接，可为 null 表示暂无缩略图"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "收录日期 (ISO 8601)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "最后更新日期 (ISO 8601)"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -10,29 +10,14 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/renderer/*"],
-      "@shared/*": ["./src/shared/*"],
-      "@main/*": ["./src/main/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./src/shared/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "electron.vite.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "release",
-    "tests"
-  ],
-  "references": [
-    { "path": "./tsconfig.node.json" }
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "release", "tests", "server"]
 }
