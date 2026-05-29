@@ -110,8 +110,9 @@ function App() {
       refreshUserCourses()
       setFetchStatus('success')
       setFetchMsg(`已添加：${course.title.slice(0, 30)}...`)
-      filters.setKeyword('')
-      setView('user')
+      setView('all')
+      // 用视频标题作为搜索关键词，只显示这个视频
+      filters.setKeyword(course.title)
       setTimeout(() => setFetchStatus('idle'), 3000)
     } else {
       setFetchStatus('error')
