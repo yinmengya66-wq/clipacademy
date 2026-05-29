@@ -10,7 +10,7 @@ import {
   PROFICIENCY_LEVELS,
 } from '@shared/types'
 import { useCourses, useFavorites, useFilters, useProficiency } from './hooks/useCourses'
-import { openExternalLink, getSuggestions, isURL, fetchCourseFromURL, addUserCourse, removeUserCourse } from './services/api'
+import { openExternalLink, getSuggestions, extractURL, fetchCourseFromURL, addUserCourse, removeUserCourse } from './services/api'
 
 type View = 'all' | 'favorites' | { category: Category } | { proficiency: number }
 type FetchStatus = 'idle' | 'fetching' | 'success' | 'error' | 'duplicate'
@@ -129,9 +129,10 @@ function App() {
   const handleSearchChange = (value: string) => {
     filters.setKeyword(value)
 
-    // 检测粘贴的链接
-    if (isURL(value)) {
-      handleURLFetch(value.trim())
+    // 检测粘贴的链接（支持纯链接和"标题+链接"混合格式）
+    const url = extractURL(value)
+    if (url) {
+      handleURLFetch(url)
       return
     }
 

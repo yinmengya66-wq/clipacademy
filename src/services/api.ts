@@ -24,8 +24,13 @@ export function detectURLPlatform(url: string): string | null {
   return null
 }
 
+export function extractURL(text: string): string | null {
+  const match = text.match(/https?:\/\/[^\s]+/)
+  return match ? match[0] : null
+}
+
 export function isURL(text: string): boolean {
-  return /^https?:\/\//.test(text.trim())
+  return /https?:\/\//.test(text.trim())
 }
 
 export async function fetchCourseFromURL(url: string): Promise<Course | null> {
