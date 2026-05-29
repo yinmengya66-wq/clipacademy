@@ -50,25 +50,17 @@ function loadCourses(): Course[] {
   const filePath = path.join(process.cwd(), 'server/src/data/seed.json')
   const raw = fs.readFileSync(filePath, 'utf-8')
   _courses = JSON.parse(raw) as Course[]
-  // ensure bvId is populated
   for (const c of _courses) {
-    if (!c.bvId) {
-      c.bvId = extractBvId(c.url)
-    }
+    if (!c.bvId) c.bvId = extractBvId(c.url)
   }
   return _courses
 }
 
-function parseArray(val: string | null): string[] | undefined {
-  if (!val) return undefined
-  return val.split(',').filter(Boolean)
-}
-
 export function searchCourses(opts: {
   keyword?: string
-  platforms?: string[]
-  categories?: string[]
-  difficulties?: string[]
+  platforms?: string
+  categories?: string
+  difficulties?: string
   sort?: string
   page?: number
   pageSize?: number
@@ -86,16 +78,19 @@ export function searchCourses(opts: {
     )
   }
 
-  if (opts.platforms?.length) {
-    list = list.filter((c) => opts.platforms!.includes(c.platform))
+  if (opts.platforms) {
+    const arr = opts.platforms.split(',')
+    list = list.filter((c) => arr.includes(c.platform))
   }
 
-  if (opts.categories?.length) {
-    list = list.filter((c) => opts.categories!.includes(c.category))
+  if (opts.categories) {
+    const arr = opts.categories.split(',')
+    list = list.filter((c) => arr.includes(c.category))
   }
 
-  if (opts.difficulties?.length) {
-    list = list.filter((c) => opts.difficulties!.includes(c.difficulty))
+  if (opts.difficulties) {
+    const arr = opts.difficulties.split(',')
+    list = list.filter((c) => arr.includes(c.difficulty))
   }
 
   switch (opts.sort) {
@@ -106,10 +101,7 @@ export function searchCourses(opts: {
       list.sort((a, b) => (b.favorites ?? 0) - (a.favorites ?? 0))
       break
     case 'newest':
-      list.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       break
     case 'duration':
       list.sort((a, b) => b.duration - a.duration)
@@ -150,10 +142,7 @@ export function getSuggestions(q: string, limit = 8): string[] {
   const seen = new Set<string>()
   const result: string[] = []
   for (const c of loadCourses()) {
-    if (
-      c.title.toLowerCase().includes(kw) &&
-      !seen.has(c.title)
-    ) {
+    if (c.title.toLowerCase().includes(kw) && !seen.has(c.title)) {
       seen.add(c.title)
       result.push(c.title)
       if (result.length >= limit) break

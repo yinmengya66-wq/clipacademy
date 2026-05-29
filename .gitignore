@@ -59,6 +59,9 @@ Thumbs.db
 # Tooling
 .wanman/
 
+# Netlify
+.netlify/
+
 # Logs
 npm-debug.log*
 pnpm-debug.log*
