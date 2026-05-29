@@ -478,14 +478,6 @@ body {
 
 .detail-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
 
-/* Cover */
-.detail-cover {
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  aspect-ratio: 16/9;
-  background: linear-gradient(135deg, #1a1a2e, #16213e);
-}
-
 /* Player */
 .detail-player-wrapper {
   border-radius: var(--radius-sm);
