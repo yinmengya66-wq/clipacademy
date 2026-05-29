@@ -10,38 +10,35 @@
 Icon
 .disk
 
-# Xcode
-*.xcuserdata
-*.xccheckout
-*.moved-aside
-DerivedData/
-build/
-*.hmap
-*.ipa
-*.xcuserstate
-
-# Swift Package Manager
-.build/
-Packages/
-Package.resolved
-
-# CocoaPods
-Pods/
-
-# Carthage
-Carthage/Build/
-
 # Dependencies
 node_modules/
+.pnpm-store/
 
 # Build output
 dist/
-release/
 out/
+release/
+
+# Vite
+.vite/
+
+# Electron
+*.dmg
+*.zip
+*.AppImage
+
+# TypeScript
+*.tsbuildinfo
+*.tsbuildinfo.*
 
 # Test coverage
 coverage/
 *.lcov
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # IDE
 .vscode/
@@ -49,11 +46,10 @@ coverage/
 *.swp
 *.swo
 
-# Env files
-.env
-.env.local
-.env.*.local
+# OS
+Thumbs.db
 
 # Logs
-*.log
 npm-debug.log*
+pnpm-debug.log*
+*.log
