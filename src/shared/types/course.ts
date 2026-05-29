@@ -100,9 +100,9 @@ export interface CourseSearchParams {
 
 export const PROFICIENCY_LEVELS = [
   { value: 0, label: '未学习' },
-  { value: 30, label: '了解 (30%)' },
+  { value: 25, label: '了解 (25%)' },
   { value: 50, label: '练习中 (50%)' },
-  { value: 70, label: '熟练 (70%)' },
+  { value: 75, label: '熟练 (75%)' },
   { value: 100, label: '精通 (100%)' },
 ] as const
 

@@ -24,13 +24,16 @@ export function useCourses() {
     const userMatches = userList.filter((uc) => {
       if (params.keyword) {
         const kw = params.keyword.toLowerCase()
-        return (
-          uc.title.toLowerCase().includes(kw) ||
-          uc.author.toLowerCase().includes(kw) ||
-          uc.tags.some((t) => t.toLowerCase().includes(kw)) ||
-          uc.description.toLowerCase().includes(kw)
-        )
+        if (
+          !uc.title.toLowerCase().includes(kw) &&
+          !uc.author.toLowerCase().includes(kw) &&
+          !uc.tags.some((t) => t.toLowerCase().includes(kw)) &&
+          !uc.description.toLowerCase().includes(kw)
+        ) return false
       }
+      if (params.platforms?.length && !params.platforms.includes(uc.platform)) return false
+      if (params.categories?.length && !params.categories.includes(uc.category as any)) return false
+      if (params.difficulties?.length && !params.difficulties.includes(uc.difficulty as any)) return false
       return true
     })
     for (const um of userMatches) {
