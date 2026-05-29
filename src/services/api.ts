@@ -131,6 +131,24 @@ export function removeUserCourse(id: string): void {
   localStorage.setItem(USER_COURSES_KEY, JSON.stringify(courses))
 }
 
+// ===== 隐藏种子课程 =====
+
+const HIDDEN_COURSES_KEY = 'clipacademy-hidden-courses'
+
+export function getHiddenCourseIds(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(HIDDEN_COURSES_KEY) ?? '[]'))
+  } catch {
+    return new Set()
+  }
+}
+
+export function hideCourse(id: string): void {
+  const ids = getHiddenCourseIds()
+  ids.add(id)
+  localStorage.setItem(HIDDEN_COURSES_KEY, JSON.stringify([...ids]))
+}
+
 interface PaginatedResponse {
   courses: Course[]
   total: number

@@ -10,7 +10,7 @@ import {
   PROFICIENCY_LEVELS,
 } from '@shared/types'
 import { useCourses, useFavorites, useFilters, useProficiency } from './hooks/useCourses'
-import { openExternalLink, getSuggestions, extractURL, fetchCourseFromURL, addUserCourse, removeUserCourse } from './services/api'
+import { openExternalLink, getSuggestions, extractURL, fetchCourseFromURL, addUserCourse, removeUserCourse, hideCourse } from './services/api'
 
 type View = 'all' | 'favorites' | 'user' | { category: Category } | { proficiency: number }
 type FetchStatus = 'idle' | 'fetching' | 'success' | 'error' | 'duplicate'
@@ -464,6 +464,27 @@ function App() {
                             {getLevel(course.id)}%
                           </span>
                         )}
+                        <button
+                          className="card-delete-btn"
+                          title="删除此课程"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (course.id.startsWith('user-')) {
+                              removeUserCourse(course.id)
+                              refreshUserCourses()
+                            } else {
+                              hideCourse(course.id)
+                            }
+                            // 重新搜索刷新列表
+                            search({
+                              keyword: filters.keyword || undefined,
+                              platforms: filters.platforms.length ? filters.platforms : undefined,
+                              categories: filters.categories.length ? filters.categories : undefined,
+                              difficulties: filters.difficulties.length ? filters.difficulties : undefined,
+                              sort: sortBy,
+                            })
+                          }}
+                        >×</button>
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Course, CourseSearchParams, Platform, Category, Difficulty } from '@shared/types'
-import { searchCourses, getFavoriteIds, toggleFavorite as toggleFavApi, getProficiency as getProfApi, setProficiency as setProfApi, getUserCourses } from '../services/api'
+import { searchCourses, getFavoriteIds, toggleFavorite as toggleFavApi, getProficiency as getProfApi, setProficiency as setProfApi, getUserCourses, getHiddenCourseIds } from '../services/api'
 
 export function useCourses() {
   const [courses, setCourses] = useState<Course[]>([])
@@ -16,10 +16,11 @@ export function useCourses() {
     setLoading(true)
     const result = await searchCourses(params)
     const userList = getUserCourses()
+    const hiddenIds = getHiddenCourseIds()
     setUserCourses(userList)
 
-    // 合并用户课程：过滤后放在最前面
-    let merged = [...result.courses]
+    // 过滤掉隐藏的种子课程 + 合并用户课程
+    let merged = result.courses.filter((c) => !hiddenIds.has(c.id))
     const userMatches = userList.filter((uc) => {
       if (params.keyword) {
         const kw = params.keyword.toLowerCase()
@@ -32,7 +33,6 @@ export function useCourses() {
       }
       return true
     })
-    // 把匹配的用户课程插入最前面
     for (const um of userMatches) {
       if (!merged.find((c) => c.id === um.id)) {
         merged.unshift(um)

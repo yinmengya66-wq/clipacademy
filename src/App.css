@@ -425,6 +425,21 @@ body {
 }
 .prof-badge:hover { background: #ddd6fe; }
 
+.card-delete-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+.card-delete-btn:hover { color: #ef4444; background: #fef2f2; }
+
 /* Detail Panel */
 .detail-overlay {
   position: fixed;
