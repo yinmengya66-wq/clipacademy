@@ -12,7 +12,7 @@ import {
 import { useCourses, useFavorites, useFilters, useProficiency } from './hooks/useCourses'
 import { openExternalLink, getSuggestions, extractURL, fetchCourseFromURL, addUserCourse, removeUserCourse } from './services/api'
 
-type View = 'all' | 'favorites' | { category: Category } | { proficiency: number }
+type View = 'all' | 'favorites' | 'user' | { category: Category } | { proficiency: number }
 type FetchStatus = 'idle' | 'fetching' | 'success' | 'error' | 'duplicate'
 
 const PROF_VALUES = [30, 50, 70, 100] as const
@@ -80,6 +80,7 @@ function App() {
 
   const displayedCourses = useMemo(() => {
     if (view === 'favorites') return courses.filter((c) => favoriteIds.has(c.id))
+    if (view === 'user') return courses.filter((c) => c.id.startsWith('user-'))
     if (typeof view === 'object' && 'category' in view) {
       return courses.filter((c) => c.category === view.category)
     }
@@ -107,17 +108,10 @@ function App() {
     if (course) {
       addUserCourse(course)
       refreshUserCourses()
-      // 重新搜索以合并用户课程
-      search({
-        keyword: filters.keyword || undefined,
-        platforms: filters.platforms.length ? filters.platforms : undefined,
-        categories: filters.categories.length ? filters.categories : undefined,
-        difficulties: filters.difficulties.length ? filters.difficulties : undefined,
-        sort: sortBy,
-      })
       setFetchStatus('success')
       setFetchMsg(`已添加：${course.title.slice(0, 30)}...`)
       filters.setKeyword('')
+      setView('user')
       setTimeout(() => setFetchStatus('idle'), 3000)
     } else {
       setFetchStatus('error')
@@ -189,6 +183,13 @@ function App() {
           >
             <span className="nav-icon">⭐</span>我的收藏
             {favoriteIds.size > 0 && <span className="nav-count">{favoriteIds.size}</span>}
+          </div>
+          <div
+            className={`sidebar-nav-item ${view === 'user' ? 'active' : ''}`}
+            onClick={() => setView('user')}
+          >
+            <span className="nav-icon">📌</span>我的课程
+            {userCourses.length > 0 && <span className="nav-count">{userCourses.length}</span>}
           </div>
           <div className="sidebar-section-title">学习进度</div>
           {PROFICIENCY_LEVELS.filter((l) => l.value > 0).map((l) => {
