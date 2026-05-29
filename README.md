@@ -1,12 +1,12 @@
 # 剪辑课程查询 · ClipAcademy
 
-> 一个简约高级的 macOS 原生风格桌面应用，聚合小红书、B站、抖音、YouTube 等平台的优质剪辑课程资源。一站式搜索、分类浏览、快速跳转学习。
+> 一个简约高级的桌面应用，基于 Electron + React + TypeScript 构建，聚合小红书、B站、抖音、YouTube 等平台的优质剪辑课程资源。一站式搜索、分类浏览、快速跳转学习。
 
 ---
 
 ## 项目愿景
 
-**ClipAcademy** 旨在为剪辑学习者（尤其是剪映 Mac 端用户）提供一个清爽高效的课程发现与索引工具。它不替代任何平台，而是作为你的"剪辑课程导航仪"——帮助你从海量内容中快速找到真正值得学习的课程。
+**ClipAcademy** 旨在为剪辑学习者（尤其是剪映用户）提供一个清爽高效的课程发现与索引工具。它不替代任何平台，而是作为你的"剪辑课程导航仪"——帮助你从海量内容中快速找到真正值得学习的课程。
 
 ### 解决的问题
 
@@ -17,7 +17,7 @@
 ### 设计理念
 
 - **不造轮子**：不做视频播放器，不做社区，聚焦于"发现 + 索引 + 跳转"
-- **macOS 原生感**：SwiftUI 原生 UI 组件，侧边栏导航、毛玻璃材质、流畅动画
+- **跨平台桌面体验**：基于 Electron 构建，原生级窗口管理、系统通知、菜单栏
 - **简约不简单**：界面干净，但搜索和分类能力强大
 
 ---
@@ -39,49 +39,61 @@
 - [ ] 本地课程库定期同步更新
 - [ ] 剪映版本兼容性标注
 - [ ] 课程评分与用户评价
-- [ ] iCloud 同步收藏数据
+- [ ] 跨设备同步收藏数据
 
 ---
 
-## 技术栈（待定）
+## 技术栈
 
-> 以下为推荐方案，最终选型由 `dev` agent 在「项目脚手架搭建与技术选型」任务中确定。
+> 以下方案已在「项目脚手架搭建与技术选型」任务中确定。
 
-| 层级 | 推荐方案 | 说明 |
-|------|---------|------|
-| UI 框架 | SwiftUI | macOS 原生 UI，支持现代设计语言 |
-| 架构模式 | MVVM | SwiftUI 原生配套 |
-| 数据存储 | SwiftData / Core Data | Apple 生态原生持久化方案 |
-| 课程数据 | 本地 JSON / SQLite | 离线优先，定期更新课程索引 |
-| 包管理 | Swift Package Manager | Xcode 原生支持 |
-| 最低系统 | macOS 14 Sonoma | 充分利用最新 SwiftUI 特性 |
+| 层级 | 方案 | 说明 |
+|------|------|------|
+| 桌面框架 | Electron 33 | 跨平台桌面应用框架，Chromium + Node.js |
+| UI 框架 | React 18 + TypeScript | 组件化 UI，类型安全 |
+| 构建工具 | electron-vite 2 + Vite 6 | 极速 HMR 开发体验，主进程/预加载/渲染进程统一构建 |
+| 测试框架 | Vitest + Testing Library | 单元测试 + 组件测试，Vite 原生集成 |
+| 代码规范 | ESLint + TypeScript strict | 静态检查，严格模式 |
+| 打包分发 | electron-builder | macOS DMG/ZIP 打包，支持自动更新 |
+| 最低系统 | macOS 13 Ventura | Electron 33 最低要求 |
 
 ---
 
-## 项目结构（规划）
+## 项目结构
 
 ```
 ClipAcademy/
 ├── README.md                    # 项目说明
 ├── CHANGELOG.md                 # 更新日志
+├── package.json                 # 项目配置与依赖
+├── electron.vite.config.ts      # electron-vite 构建配置
+├── tsconfig.json                # TypeScript 配置
+├── tsconfig.node.json           # Node 端 TypeScript 配置
+├── vitest.config.ts             # Vitest 测试配置
 ├── docs/
 │   ├── ARCHITECTURE.md          # 架构设计文档
 │   └── DATA_MODEL.md            # 课程数据模型设计
-├── ClipAcademy.xcodeproj        # Xcode 工程文件
-├── Sources/
-│   ├── App/                     # App 入口、生命周期
-│   ├── Models/                  # 数据模型（课程、分类、作者等）
-│   ├── ViewModels/              # 视图模型层
-│   ├── Views/                   # UI 视图组件
-│   │   ├── Sidebar/             # 侧边栏导航
-│   │   ├── Search/              # 搜索界面
-│   │   ├── Browse/              # 分类浏览
-│   │   ├── Detail/              # 课程详情
-│   │   └── Common/              # 通用组件
-│   ├── Services/                # 数据服务层（搜索、数据加载）
-│   ├── Resources/               # 课程数据 JSON、图标等
-│   └── Extensions/              # Swift 扩展
-└── Tests/                       # 单元测试 & UI 测试
+├── resources/                   # 应用图标等静态资源
+├── src/
+│   ├── main/                    # Electron 主进程
+│   │   ├── index.ts             # 主进程入口
+│   │   └── preload.ts           # 预加载脚本（contextBridge）
+│   ├── renderer/                # React 渲染进程
+│   │   ├── index.html           # HTML 入口
+│   │   ├── App.tsx              # 根组件
+│   │   ├── components/          # UI 组件
+│   │   │   ├── Sidebar/         # 侧边栏导航
+│   │   │   ├── Search/          # 搜索界面
+│   │   │   ├── Browse/          # 分类浏览
+│   │   │   ├── Detail/          # 课程详情
+│   │   │   └── Common/          # 通用组件
+│   │   ├── hooks/               # 自定义 Hooks
+│   │   ├── services/            # 数据服务层
+│   │   └── styles/              # 样式文件
+│   ├── shared/                  # 主进程/渲染进程共享代码
+│   │   └── types/               # 共享类型定义
+│   └── resources/               # 课程数据 JSON 等
+└── tests/                       # 测试文件
 ```
 
 ---
@@ -90,9 +102,9 @@ ClipAcademy/
 
 ### 环境要求
 
-- macOS 14 Sonoma 或更高版本
-- Xcode 16+
-- Swift 6.0+
+- macOS 13 Ventura 或更高版本
+- Node.js 20 LTS 或更高版本
+- npm 10+ 或 pnpm 8+
 
 ### 快速开始
 
@@ -101,20 +113,40 @@ ClipAcademy/
 git clone <repo-url>
 cd ClipAcademy
 
-# 2. 打开 Xcode 工程
-open ClipAcademy.xcodeproj
+# 2. 安装依赖
+npm install
 
-# 3. 选择 My Mac 目标，运行
-⌘ + R
+# 3. 启动开发模式（带热更新）
+npm run dev
+
+# 4. 构建生产版本
+npm run build
+
+# 5. 打包 macOS 应用
+npm run package
 ```
+
+### 常用命令
+
+| 命令 | 说明 |
+|------|------|
+| `npm run dev` | 启动开发服务器，支持 HMR |
+| `npm run build` | 构建生产版本到 dist/ |
+| `npm run start` | 直接启动 Electron（需先构建） |
+| `npm run package` | 打包为 macOS DMG/ZIP |
+| `npm run test` | 运行单元测试 |
+| `npm run test:coverage` | 运行测试并生成覆盖率报告 |
+| `npm run lint` | ESLint 代码检查 |
+| `npm run typecheck` | TypeScript 类型检查 |
 
 ### 贡献指南
 
 1. 从 `main` 分支创建功能分支：`git checkout -b feature/your-feature`
-2. 遵循 MVVM 架构规范，ViewModel 不得直接引用 UIView
-3. 所有新功能需包含单元测试，覆盖核心逻辑
-4. UI 变更需在 macOS 14+ 上验证视觉效果
-5. 提交前运行完整测试套件：`⌘ + U`
+2. 使用 React 函数组件 + Hooks，遵循组件化开发规范
+3. 所有新功能需包含单元测试（Vitest），覆盖核心逻辑
+4. 共享类型定义放在 `src/shared/types/` 目录
+5. 提交前确保通过：`npm run typecheck && npm run lint && npm run test`
+6. 主进程代码遵循 Electron 安全最佳实践，避免 `nodeIntegration: true`
 
 ---
 
